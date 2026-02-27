@@ -1,0 +1,116 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container py-5">
+    <!-- Header Section -->
+    <div class="row align-items-end mb-5">
+        <div class="col-lg-8">
+            <h6 class="text-warning fw-bold text-uppercase small tracking-widest mb-2">Support & Technique</h6>
+            <h1 class="fw-bold text-dark mb-0 display-5 tracking-tight">Maintenance Hébergement</h1>
+            <p class="text-muted fs-5 mt-2">Suivi centralisé des pannes, réparations et interventions techniques.</p>
+        </div>
+        <div class="col-lg-4 d-flex justify-content-lg-end gap-2 mt-4 mt-lg-0">
+            <a href="{{ url_for('hbg_dashboard') }}" class="btn btn-white border shadow-sm px-4 py-2 hover-lift">
+                <i class="bi bi-arrow-left me-2"></i>Dashboard
+            </a>
+        </div>
+    </div>
+
+    {% if can_manage %}
+    <!-- Creation Card Premium -->
+    <div class="card border-0 shadow-sm mb-5 overflow-hidden"
+        style="border-radius: 20px; background: linear-gradient(135deg, #fffcf0 0%, #fff 100%); border-left: 6px solid #ffc107 !important;">
+        <div class="card-body p-4 p-lg-5">
+            <div class="d-flex align-items-center gap-2 mb-4">
+                <div class="bg-warning p-2 rounded-3 text-dark">
+                    <i class="bi bi-wrench-adjustable fs-5"></i>
+                </div>
+                <h4 class="fw-bold mb-0 text-dark">Lancer une Intervention</h4>
+            </div>
+
+            <form action="{{ url_for('hbg_maintenance') }}" method="POST" class="row g-3">
+                <div class="col-md-9">
+                    <label class="form-label small fw-bold text-muted uppercase">Sujet de la Maintenance /
+                        Localisation</label>
+                    <input type="text" name="name" class="form-control form-control-lg bg-white shadow-none"
+                        placeholder="Ex: Réparation Clim / Bloc B - Fuite" required style="border-radius: 12px;">
+                </div>
+                <div class="col-md-3 d-flex align-items-end">
+                    <button type="submit" class="btn btn-warning btn-lg w-100 fw-bold shadow text-dark"
+                        style="border-radius: 12px;">
+                        CRÉER LA FICHE
+                    </button>
+                </div>
+            </form>
+            <p class="small text-muted mt-3 mb-0">
+                <i class="bi bi-info-circle me-1"></i>Les colonnes de suivi (Description, Priorité, Statut, Assigné)
+                sont générées automatiquement.
+            </p>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Grid Layout -->
+    <div class="row g-4 mb-5">
+        {% for table in tables %}
+        <div class="col-md-6 col-lg-4">
+            <div class="card h-100 border-0 shadow-sm hover-lift transition-all overflow-hidden"
+                style="border-radius: 18px;">
+                <div
+                    class="card-body p-4 border-top border-4 {% if loop.index % 2 == 0 %}border-warning{% else %}border-dark{% endif %}">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <span
+                            class="badge bg-warning-subtle text-warning border border-warning-subtle px-3 py-2 rounded-pill uppercase small">
+                            Technique
+                        </span>
+                        <span class="text-muted small font-monospace">{{ table.created_at.strftime('%d/%m/%Y') }}</span>
+                    </div>
+
+                    <h4 class="fw-bold text-dark mb-4 tracking-tight">{{ table.name }}</h4>
+
+                    <a href="{{ url_for('hbg_view_table', table_id=table.id) }}"
+                        class="btn btn-dark w-100 fw-bold py-2 shadow-sm" style="border-radius: 10px;">
+                        OUVRIR LE SUIVI <i class="bi bi-chevron-right ms-2"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% else %}
+        <div class="col-12 py-5 text-center">
+            <div class="mx-auto bg-white shadow-sm p-5 rounded-4 d-inline-block border"
+                style="max-width: 400px; border-radius: 20px;">
+                <i class="bi bi-tools text-light display-1 mb-4"></i>
+                <h4 class="fw-bold text-dark">Aucune fiche</h4>
+                <p class="text-muted">Aucune intervention technique n'est listée pour le moment.</p>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<style>
+    .tracking-tight {
+        letter-spacing: -0.015em;
+    }
+
+    .tracking-widest {
+        letter-spacing: 0.12em;
+    }
+
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(15px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .container {
+        animation: fadeInUp 0.4s ease-out;
+    }
+</style>
+{% endblock %}

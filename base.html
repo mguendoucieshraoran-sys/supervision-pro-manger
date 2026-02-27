@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Supervision Pro</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+
+    <!-- PWA Settings -->
+    <link rel="manifest" href="/static/manifest.json">
+    <link rel="icon" type="image/svg+xml" href="/static/icon.svg">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#0f172a">
+
+    <style>
+        body {
+            background-color: #f4f7f6;
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+
+        .navbar-pro {
+            background: #0f172a;
+            padding: 1rem 0;
+            color: white;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .brand-text {
+            font-weight: 800;
+            font-size: 1.25rem;
+            color: white;
+            text-decoration: none;
+        }
+
+        .nav-link-pro {
+            color: #94a3b8;
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.2s;
+            margin-left: 1rem;
+        }
+
+        .nav-link-pro:hover {
+            color: white;
+        }
+
+        .card {
+            border: none;
+            box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+            border-radius: 12px;
+        }
+
+        .msg-bubble {
+            max-width: 75%;
+            padding: 10px;
+            border-radius: 10px;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+
+<body>
+    <nav class="navbar-pro">
+        <div class="container d-flex justify-content-between align-items-center">
+            <a class="text-decoration-none d-flex align-items-center gap-2" href="/">
+                <span class="brand-text">■ SUPERVISION PRO <small class="opacity-50"
+                        style="font-size: 0.6rem;">v12.Final</small></span>
+            </a>
+            <div class="d-flex align-items-center gap-2">
+                {% if session.get('company_name') %}
+                <span class="company-badge d-none d-md-inline">
+                    {{ session.get('company_name') }}
+                </span>
+                {% endif %}
+                {% if session.get('user_id') or session.get('role') == 'manager' %}
+                <a class="nav-link-pro position-relative" href="{{ url_for('user_settings') }}" title="Paramètres">
+                    <i class="bi bi-gear"></i><span class="d-none d-md-inline ms-1">Paramètres</span>
+                    {% if unread_count > 0 %}
+                    <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger"
+                        style="font-size: 0.6rem; padding: 0.3em 0.5em;">
+                        {{ unread_count }}
+                    </span>
+                    {% endif %}
+                </a>
+                <a class="nav-link-pro" href="{{ url_for('logout') }}">
+                    <i class="bi bi-box-arrow-right"></i><span class="d-none d-md-inline ms-1">Quitter</span>
+                </a>
+                {% endif %}
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-3">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+        {% for category, message in messages %}
+        <div class="alert alert-{{ category }} shadow-sm mb-2" role="alert">
+            {{ message }}
+        </div>
+        {% endfor %}
+        {% endif %}
+        {% endwith %}
+    </div>
+
+    {% block content %}{% endblock %}
+
+    <!-- Support Notifications Pro -->
+    <audio id="notif-sound" src="https://assets.mixkit.co/active_storage/sfx/2358/2358-preview.mp3"
+        preload="auto"></audio>
+
+    <script>
+        // Notifications permission
+        if ("Notification" in window) {
+            if (Notification.permission !== "granted" && Notification.permission !== "denied") {
+                Notification.requestPermission();
+            }
+        }
+
+        function showNotification(title, body) {
+            document.getElementById('notif-sound').play().catch(e => console.log("Audio play blocked"));
+            if ("Notification" in window && Notification.permission === "granted") {
+                new Notification(title, {
+                    body: body,
+                    icon: "https://cdn-icons-png.flaticon.com/512/888/888856.png"
+                });
+            }
+        }
+
+        // Polling messages
+        let lastMsgId = 0;
+        function checkNewMessages() {
+            fetch('/api/check_messages?last_id=' + lastMsgId)
+                .then(r => r.json())
+                .then(data => {
+                    if (data.new_messages && data.new_messages.length > 0) {
+                        data.new_messages.forEach(msg => {
+                            if (lastMsgId !== 0) {
+                                showNotification("Nouveau Message - Supervision Pro", msg.content);
+                            }
+                            lastMsgId = Math.max(lastMsgId, msg.id);
+                        });
+                    }
+                }).catch(() => { });
+        }
+        setInterval(checkNewMessages, 10000);
+        checkNewMessages();
+    </script>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+
+</html>

@@ -1,0 +1,66 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="fw-bold text-primary">🏨 Hébergement - État des Lieux</h2>
+        <a href="{{ url_for('manager_dashboard', section='hebergement') }}" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left"></i> Retour
+        </a>
+    </div>
+
+    <!-- Formulaire d'ajout -->
+    <div class="card shadow-sm border-0 mb-4 rounded-3 p-4">
+        <h5 class="fw-bold mb-3">Nouvel État des Lieux</h5>
+        <form method="POST" class="row g-3">
+            <div class="col-md-6">
+                <label class="form-label small text-muted">Lieu (Chambre, Étage, Couloir, Office...)</label>
+                <input type="text" name="location" class="form-control" placeholder="ex: Chambre 101, Couloir 2ème..."
+                    required>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label small text-muted">État Global</label>
+                <select name="status" class="form-select">
+                    <option value="Propre">✨ Propre</option>
+                    <option value="À revoir">⚠️ À revoir</option>
+                    <option value="Dégradé">❌ Dégradé</option>
+                </select>
+            </div>
+            <div class="col-md-2 d-flex align-items-end">
+                <button type="submit" class="btn btn-primary w-100 fw-bold">Ajouter</button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Liste des inspections -->
+    <div class="card shadow-sm border-0 rounded-3 overflow-hidden">
+        <table class="table table-hover mb-0 align-middle">
+            <thead class="bg-light">
+                <tr>
+                    <th class="ps-4 py-3">LIEU</th>
+                    <th class="py-3 text-center">ÉTAT</th>
+                    <th class="py-3 text-center">DATE</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for insp in inspections %}
+                <tr>
+                    <td class="ps-4 fw-medium">{{ insp.location }}</td>
+                    <td class="text-center">
+                        <span
+                            class="badge rounded-pill {% if insp.status == 'Propre' %}bg-success{% elif insp.status == 'À revoir' %}bg-warning{% elif insp.status == 'Dégradé' %}bg-danger{% else %}bg-info{% endif %}">
+                            {{ insp.status }}
+                        </span>
+                    </td>
+                    <td class="text-center text-muted small">{{ insp.created_at.strftime('%d/%m/%Y %H:%M') }}</td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="3" class="text-center py-5 text-muted">Aucun état des lieux enregistré.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

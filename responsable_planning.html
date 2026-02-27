@@ -1,0 +1,128 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="row g-4 pt-3">
+    <div class="col-12 d-flex justify-content-between align-items-center mb-2">
+        <h2 class="h4 fw-bold mb-0 text-uppercase tracking-tight">Gestion du Planning</h2>
+        <div class="d-flex gap-2">
+            <a href="{{ url_for('download_planning_pdf', section=current_section) }}"
+                class="btn btn-outline-primary btn-sm fw-bold">📄 EXPORT PDF</a>
+            <button onclick="window.print()" class="btn btn-outline-secondary btn-sm fw-bold">🖨 IMPRIMER</button>
+            <a href="{{ url_for('manager_dashboard', section=current_section) }}"
+                class="btn btn-outline-dark btn-sm fw-bold">RETOUR</a>
+        </div>
+    </div>
+
+    <!-- Week Selection -->
+    <div class="card p-3 mb-4 bg-light border-0">
+        <form method="GET" class="row g-3 align-items-center">
+            <input type="hidden" name="section" value="{{ current_section }}">
+            <div class="col-auto">
+                <label class="fw-bold small text-muted">ANNÉE</label>
+                <input type="number" name="year" class="form-control form-control-sm" value="{{ year }}">
+            </div>
+            <div class="col-auto">
+                <label class="fw-bold small text-muted">SEMAINE</label>
+                <input type="number" name="week" class="form-control form-control-sm" value="{{ week }}" min="1"
+                    max="53">
+            </div>
+            <div class="col-auto align-self-end">
+                <button type="submit" class="btn btn-dark btn-sm px-4 fw-bold">CHARGER</button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Planning Table -->
+    <div class="card shadow-sm border-light mb-5">
+        <form method="POST">
+            <div class="table-responsive">
+                <table class="table table-bordered mb-0 align-middle text-center">
+                    <thead class="bg-primary text-white">
+                        <tr>
+                            <th class="py-3 text-start ps-3">Collaborateur</th>
+                            {% for d in ["Lun", "Mar", "Mer", "Jeu", "Ven", "Sam", "Dim"] %}
+                            <th class="py-3">{{ d }}</th>
+                            {% endfor %}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for server in servers %}
+                        <tr>
+                            <td class="fw-bold text-start ps-3 bg-light text-primary">{{ server.name.capitalize() }}
+                            </td>
+                            {% for day in range(7) %}
+                            {% set plan = planning.get((server.id, day)) %}
+                            {% set has_shift = shift_map.get((server.id, day)) %}
+
+                            {# Calcul Absence (Jaune) : Si prévu (non OFF) et pas de shift, et c'est le passé ou
+                            aujourd'hui #}
+                            {% set is_absent = false %}
+                            {% if plan and not plan.is_off and not has_shift %}
+                            {# Si c'est un jour passé de la semaine sélectionnée ou aujourd'hui si on est en fin de
+                            semaine #}
+                            {# On simplifie : si on est sur la semaine actuelle et que le jour est <= au jour actuel #}
+                                {% set iso_y, iso_w, iso_d=today.isocalendar() %} {% if selected_year < iso_y or
+                                (selected_year==iso_y and selected_week < iso_w) or (selected_year==iso_y and
+                                selected_week==iso_w and day < (iso_d - 1)) %} {% set is_absent=true %} {% endif %} {%
+                                endif %} <td
+                                class="p-2 transition-all {% if plan and plan.is_off %}bg-danger-subtle{% elif is_absent %}bg-warning{% endif %}"
+                                id="cell-{{ server.id }}-{{ day }}">
+
+                                <div class="form-check form-switch d-flex justify-content-center mb-2">
+                                    <input class="form-check-input off-toggle" type="checkbox"
+                                        name="off_{{ server.id }}_{{ day }}" id="off_{{ server.id }}_{{ day }}" {% if
+                                        plan and plan.is_off %}checked{% endif %}
+                                        onchange="this.closest('td').classList.toggle('bg-danger-subtle', this.checked)">
+                                    <label class="ms-1 small fw-bold text-danger"
+                                        for="off_{{ server.id }}_{{ day }}">OFF</label>
+                                </div>
+
+                                <div class="time-inputs {% if plan and plan.is_off %}d-none{% endif %}"
+                                    id="time-{{ server.id }}-{{ day }}">
+                                    <input type="time" name="start_{{ server.id }}_{{ day }}"
+                                        class="form-control form-control-sm mb-1"
+                                        value="{{ plan.start_time_str if plan else '08:00' }}">
+                                    <input type="time" name="end_{{ server.id }}_{{ day }}"
+                                        class="form-control form-control-sm"
+                                        value="{{ plan.end_time_str if plan else '16:00' }}">
+                                </div>
+
+                                {% if plan and plan.is_off %}
+                                <div class="text-danger fw-bold py-2 small">REPOS / OFF</div>
+                                {% elif is_absent %}
+                                <div class="text-dark fw-bold py-2 small">🔴 NON POINTÉ</div>
+                                {% elif has_shift %}
+                                <div class="text-success fw-bold py-2 small">✔️ PRÉSENT</div>
+                                {% endif %}
+                                </td>
+                                {% endfor %}
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            <div class="card-footer bg-white p-4 d-flex justify-content-between">
+                <div class="small text-muted align-self-center">
+                    <span class="badge bg-danger">OFF</span> = Coloration rouge et désactivation des horaires.
+                </div>
+                <button type="submit" class="btn btn-primary px-5 fw-bold">ENREGISTRER TOUT LE PLANNING</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    document.querySelectorAll('.off-toggle').forEach(el => {
+        el.addEventListener('change', function () {
+            const serverId = this.id.split('_')[1];
+            const day = this.id.split('_')[2];
+            const timeDiv = document.getElementById(`time-${serverId}-${day}`);
+            if (this.checked) {
+                timeDiv.classList.add('d-none');
+            } else {
+                timeDiv.classList.remove('d-none');
+            }
+        });
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,123 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="row g-4">
+    <div class="col-12 d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="h4 fw-bold mb-1 text-uppercase tracking-tight">Stocks - {{ current_section|upper }}</h2>
+            <p class="text-muted small mb-0">Suivi journalier {{ current_section|capitalize }} : Initial, Ventes et
+                Disponibles.</p>
+        </div>
+        <div class="d-flex gap-2">
+            <a href="{{ url_for('manager_dashboard', section=current_section) }}"
+                class="btn btn-outline-dark shadow-sm">RETOUR</a>
+            <button class="btn btn-primary shadow-sm" data-bs-toggle="modal" data-bs-target="#addItemModal">
+                AJOUTER UN PRODUIT
+            </button>
+        </div>
+    </div>
+
+    <!-- Tableau de Stock (Format Professionnel) -->
+    <div class="col-12">
+        <div class="card overflow-hidden">
+            <div class="table-responsive">
+                <table class="table align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th class="ps-4">Désignation Produit</th>
+                            <th class="text-center">Stock Initial</th>
+                            <th class="text-center">Ventes / Sorties</th>
+                            <th class="text-center">Restes (En Stock)</th>
+                            <th class="text-center">Alerte Seuil</th>
+                            <th class="text-end pe-4">Réappro / Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for entry in items %}
+                        <tr {% if entry.remaining <=entry.item.min_threshold %}class="bg-danger-subtle" {% endif %}>
+                            <td class="ps-4">
+                                <span class="fw-bold text-dark">{{ entry.item.name }}</span>
+                                {% if entry.remaining <= entry.item.min_threshold %} <div class="text-danger fw-bold"
+                                    style="font-size: 0.65rem;">STOCK CRITIQUE
+            </div>
+            {% endif %}
+            </td>
+            <td class="text-center">
+                <span class="badge bg-light text-dark border px-3">{{ entry.initial }}</span>
+            </td>
+            <td class="text-center">
+                <span class="text-danger fw-bold">
+                    {% if entry.sales > 0 %}-{{ entry.sales }}{% else %}0{% endif %}
+                </span>
+            </td>
+            <td class="text-center">
+                <span
+                    class="badge {% if entry.remaining <= entry.item.min_threshold %}bg-danger{% else %}bg-primary{% endif %} fs-6 px-3">
+                    {{ entry.remaining }}
+                </span>
+            </td>
+            <td class="text-center">
+                <span class="text-muted small">Seuil: {{ entry.item.min_threshold }}</span>
+            </td>
+            <td class="text-end pe-4">
+                <div class="d-flex justify-content-end align-items-center gap-2">
+                    <form action="{{ url_for('stock_manager', section=current_section) }}" method="POST"
+                        class="d-flex gap-1" style="width: 130px;">
+                        <input type="hidden" name="action" value="update_qty">
+                        <input type="hidden" name="id" value="{{ entry.item.id }}">
+                        <input type="number" name="add_quantity" class="form-control form-control-sm"
+                            placeholder="+ Qté">
+                        <button type="submit" class="btn btn-sm btn-dark">OK</button>
+                    </form>
+                    <form action="{{ url_for('stock_manager', section=current_section) }}" method="POST"
+                        onsubmit="return confirm('Confirmer la suppression ?');">
+                        <input type="hidden" name="action" value="delete_item">
+                        <input type="hidden" name="id" value="{{ entry.item.id }}">
+                        <button type="submit" class="btn btn-sm btn-outline-danger border-0">🗑</button>
+                    </form>
+                </div>
+            </td>
+            </tr>
+            {% endfor %}
+            </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+</div>
+
+<!-- Modal Ajout Article -->
+<div class="modal fade" id="addItemModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header bg-light border-0">
+                <h5 class="modal-title fw-bold">NOUVEL ARTICLE</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form action="{{ url_for('stock_manager', section=current_section) }}" method="POST">
+                <div class="modal-body p-4">
+                    <input type="hidden" name="action" value="add_item">
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold text-muted">NOM DU PRODUIT</label>
+                        <input type="text" name="name" class="form-control" placeholder="Désignation" required>
+                    </div>
+                    <div class="row">
+                        <div class="col-6 mb-3">
+                            <label class="form-label small fw-bold text-muted">QTÉ INITIALE</label>
+                            <input type="number" name="quantity" class="form-control" value="0" min="0">
+                        </div>
+                        <div class="col-6 mb-3">
+                            <label class="form-label small fw-bold text-muted">SEUIL ALERTE</label>
+                            <input type="number" name="threshold" class="form-control" value="5" min="0">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer border-0">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">ANNULER</button>
+                    <button type="submit" class="btn btn-primary px-4 fw-bold">ENREGISTRER</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

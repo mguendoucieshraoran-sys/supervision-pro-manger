@@ -1,0 +1,183 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="row g-4">
+    <div class="col-12 d-flex justify-content-between align-items-center mb-2">
+        <h2 class="h4 fw-bold mb-0 text-uppercase tracking-tight">Vue Matrix Globale</h2>
+        <a href="{{ url_for('manager_dashboard') }}" class="btn btn-outline-dark btn-sm fw-bold">RETOUR TABLEAU DE
+            BORD</a>
+    </div>
+
+    <!-- Matrix Card -->
+    <div class="col-12">
+        <div class="card border-light shadow-sm overflow-hidden">
+            <div class="card-header bg-white py-3 border-bottom">
+                <h6 class="mb-0 fw-bold text-muted small text-uppercase tracking-widest">Progression en Temps Réel</h6>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-bordered align-middle mb-0 text-center" style="font-size: 0.85rem;">
+                    <thead class="bg-primary text-white">
+                        <tr>
+                            <th class="text-start ps-4 py-3" style="width: 300px;">Checklist / Collaborateur</th>
+                            {% for server in servers %}
+                            <th class="py-3">{{ server.name.upper() }}</th>
+                            {% endfor %}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for phase, tasks in tasks_by_phase.items() %}
+                        <tr class="bg-light">
+                            <td colspan="{{ servers|length + 1 }}"
+                                class="text-start ps-4 py-2 fw-bold text-muted small">
+                                {{ phase|upper }}
+                            </td>
+                        </tr>
+                        {% for task in tasks %}
+                        <tr>
+                            <td class="text-start ps-4 fw-medium border-end">
+                                {{ task.name }}
+                                <div class="text-muted" style="font-size: 0.65rem;">{{ task.scheduled_time }}</div>
+                            </td>
+                            {% for server in servers %}
+                            <td class="py-3">
+                                {% if (server.id, task.id) in status_matrix %}
+                                {% if status_matrix[(server.id, task.id)] %}
+                                <div class="d-inline-block rounded-circle bg-success shadow-sm"
+                                    style="width: 12px; height: 12px;"></div>
+                                {% else %}
+                                <div class="d-inline-block rounded-circle bg-light border"
+                                    style="width: 12px; height: 12px;"></div>
+                                {% endif %}
+                                {% else %}
+                                <span class="text-muted light" style="font-size: 0.7rem;">-</span>
+                                {% endif %}
+                            </td>
+                            {% endfor %}
+                        </tr>
+                        {% endfor %}
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Communication Section -->
+    <div class="col-12 mt-5">
+        <h5 class="fw-bold mb-4 text-muted text-uppercase tracking-widest">DIFFUSION DE MESSAGES</h5>
+        <div class="row g-4">
+            <div class="col-md-6">
+                <div class="card border-light p-4 shadow-sm h-100">
+                    <h6 class="fw-bold mb-3">Consigne Texte</h6>
+                    <form action="{{ url_for('send_message') }}" method="POST">
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold text-muted">DESTINATAIRE</label>
+                            <select name="server_id" class="form-select form-select-sm">
+                                <option value="all">DIFFUSION GÉNÉRALE (TOUS)</option>
+                                {% for server in servers %}
+                                <option value="{{ server.id }}">{{ server.name.capitalize() }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold text-muted">CONTENU DU MESSAGE</label>
+                            <textarea name="content" class="form-control form-control-sm" rows="3"
+                                placeholder="Tapez votre instruction ici..." required></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100 fw-bold">ENVOYER L'INSTRUCTION</button>
+                    </form>
+                </div>
+            </div>
+
+            <div class="col-md-6">
+                <div class="card border-light p-4 shadow-sm h-100 bg-light">
+                    <h6 class="fw-bold mb-3">Message Vocal Rapide</h6>
+                    <div class="text-center py-4">
+                        <div id="recorder-controls">
+                            <button id="start-rec" class="btn btn-outline-dark btn-lg rounded-pill shadow-sm mb-3 px-4">
+                                <span class="me-2">🎙</span> DÉMARRER L'ENREGISTREMENT
+                            </button>
+                            <p id="rec-status" class="fw-bold text-muted small">Prêt à capturer l'audio</p>
+
+                            <div id="recording-actions" class="d-none">
+                                <button id="stop-rec" class="btn btn-danger btn-sm px-4 fw-bold">ARRÊTER</button>
+                                <button id="send-vcl" class="btn btn-success btn-sm px-4 fw-bold ms-2 d-none">ENVOYER
+                                    VCL</button>
+                            </div>
+                        </div>
+                        <audio id="vcl-preview" controls class="d-none w-100 mt-4 shadow-sm"></audio>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    let mediaRecorder;
+    let audioChunks = [];
+    let audioBlob;
+
+    const startBtn = document.getElementById('start-rec');
+    const stopBtn = document.getElementById('stop-rec');
+    const sendBtn = document.getElementById('send-vcl');
+    const statusText = document.getElementById('rec-status');
+    const actionsDiv = document.getElementById('recording-actions');
+    const preview = document.getElementById('vcl-preview');
+
+    startBtn.onclick = async () => {
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            mediaRecorder = new MediaRecorder(stream);
+            mediaRecorder.ondataavailable = (e) => audioChunks.push(e.data);
+            mediaRecorder.onstop = () => {
+                audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+                const url = URL.createObjectURL(audioBlob);
+                preview.src = url;
+                preview.classList.remove('d-none');
+                sendBtn.classList.remove('d-none');
+                statusText.innerText = "Audio enregistré avec succès";
+                statusText.classList.remove('text-danger');
+            };
+
+            audioChunks = [];
+            mediaRecorder.start();
+            startBtn.classList.add('btn-danger', 'text-white');
+            startBtn.innerHTML = "🔴 ENREGISTREMENT...";
+            actionsDiv.classList.remove('d-none');
+            statusText.innerText = "CAPTURER L'AUDIO...";
+            statusText.classList.add('text-danger');
+        } catch (err) {
+            alert("Erreur micro : " + err);
+        }
+    };
+
+    stopBtn.onclick = () => {
+        mediaRecorder.stop();
+        startBtn.innerHTML = "🎙 ENREGISTRER À NOUVEAU";
+        startBtn.classList.remove('btn-danger', 'text-white');
+    };
+
+    sendBtn.onclick = async () => {
+        const formData = new FormData();
+        formData.append('audio', audioBlob);
+        formData.append('server_id', 'all');
+
+        sendBtn.disabled = true;
+        statusText.innerText = "ENVOI EN COURS...";
+
+        const resp = await fetch('/dashboard/manager/voice', {
+            method: 'POST',
+            body: formData
+        });
+        const result = await resp.json();
+        if (result.success) {
+            alert('Message vocal diffusé !');
+            location.reload();
+        } else {
+            alert('Erreur lors de l\'envoi');
+            sendBtn.disabled = false;
+        }
+    };
+</script>
+{% endblock %}

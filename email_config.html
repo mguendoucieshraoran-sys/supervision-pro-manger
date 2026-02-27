@@ -1,0 +1,53 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="row justify-content-center pt-4">
+    <div class="col-md-6">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2 class="h4 fw-bold mb-0 text-uppercase tracking-tight">Configuration Email</h2>
+            <a href="{{ url_for('manager_dashboard') }}" class="btn btn-outline-dark btn-sm">RETOUR</a>
+        </div>
+
+        <div class="card shadow-sm">
+            <div class="card-body p-4">
+                <form method="POST">
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold text-muted">SERVEUR SMTP</label>
+                        <input type="text" name="smtp_server" class="form-control"
+                            value="{{ config.smtp_server or '' }}" placeholder="smtp.gmail.com" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold text-muted">PORT SMTP</label>
+                        <input type="number" name="smtp_port" class="form-control" value="{{ config.smtp_port or 587 }}"
+                            required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold text-muted">EMAIL EXPÉDITEUR (LOGIN)</label>
+                        <input type="email" name="sender_email" class="form-control"
+                            value="{{ config.sender_email or '' }}" placeholder="votre@email.com" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold text-muted">MOT DE PASSE (OU CLÉ D'APP)</label>
+                        <input type="password" name="password" class="form-control" value="{{ config.password or '' }}"
+                            required>
+                    </div>
+                    <div class="mb-4">
+                        <label class="form-label small fw-bold text-muted">EMAIL RÉCEPTIONNAIRE (RESPONSABLE)</label>
+                        <input type="email" name="recipient_email" class="form-control"
+                            value="{{ config.recipient_email or '' }}" placeholder="destinataire@email.com" required>
+                    </div>
+
+                    <div class="d-grid shadow-sm">
+                        <button type="submit" class="btn btn-primary fw-bold p-3">ENREGISTRER LA CONFIGURATION</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div class="mt-4 p-3 bg-light rounded small border">
+            <strong>Note :</strong> Pour Gmail, utilisez un "Mot de passe d'application" si la validation en 2 étapes
+            est activée. Le port recommandé est 587.
+        </div>
+    </div>
+</div>
+{% endblock %}

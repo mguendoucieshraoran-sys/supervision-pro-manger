@@ -1,0 +1,210 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<style>
+    :root {
+        --primary: #0f172a;
+        --accent: #3b82f6;
+        --glass: rgba(255, 255, 255, 0.8);
+    }
+
+    body {
+        background: #ffffff;
+        color: var(--primary);
+    }
+
+    .hero-section {
+        position: relative;
+        padding: 120px 0 80px 0;
+        background: radial-gradient(circle at top right, #f1f5f9 0%, #ffffff 100%);
+        overflow: hidden;
+    }
+
+    .hero-title {
+        font-size: 4rem;
+        font-weight: 800;
+        letter-spacing: -2px;
+        line-height: 1.1;
+        margin-bottom: 2rem;
+        background: linear-gradient(135deg, #0f172a 0%, #334155 100%);
+        -webkit-background-clip: text;
+        background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+
+    .hero-image {
+        border-radius: 24px;
+        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.1);
+        transform: perspective(1000px) rotateY(-5deg) rotateX(5deg);
+        transition: transform 0.5s ease;
+    }
+
+    .hero-image:hover {
+        transform: perspective(1000px) rotateY(0deg) rotateX(0deg);
+    }
+
+    .feature-card {
+        border: none;
+        border-radius: 20px;
+        background: var(--glass);
+        backdrop-filter: blur(10px);
+        padding: 40px;
+        height: 100%;
+        transition: all 0.3s ease;
+        border: 1px solid #f1f5f9;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+    }
+
+    .feature-card:hover {
+        transform: translateY(-10px);
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+        border-color: var(--accent);
+    }
+
+    .icon-box {
+        width: 60px;
+        height: 60px;
+        background: #f8fafc;
+        border-radius: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        margin-bottom: 24px;
+        color: var(--accent);
+    }
+
+    .btn-cta {
+        padding: 16px 40px;
+        font-weight: 700;
+        border-radius: 12px;
+        font-size: 1.1rem;
+        transition: all 0.3s ease;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+
+    .btn-pro {
+        background: var(--primary);
+        color: white;
+        border: none;
+    }
+
+    .btn-pro:hover {
+        background: #1e293b;
+        transform: scale(1.05);
+        color: white;
+    }
+
+    .navbar {
+        border: none;
+        background: transparent !important;
+        position: absolute;
+        width: 100%;
+        z-index: 1000;
+    }
+
+    .stats-badge {
+        background: #f1f5f9;
+        color: #64748b;
+        padding: 8px 16px;
+        border-radius: 100px;
+        font-weight: 600;
+        font-size: 0.8rem;
+        display: inline-block;
+        margin-bottom: 20px;
+    }
+</style>
+
+<div class="hero-section">
+    <div class="container text-center">
+        <div class="stats-badge">VERSION 2.0 • SYSTÈME PROFESSIONNEL</div>
+        <h1 class="hero-title">L'Excellence Opérationnelle en Hôtellerie & Restauration</h1>
+        <p class="lead mb-5 opacity-75 mx-auto" style="max-width: 600px; font-size: 1.25rem;">
+            Gérez vos équipes, vos stocks et votre planning avec une précision chirurgicale. Supervision Pro transforme
+            votre établissement en une machine performante.
+        </p>
+        <div class="d-flex justify-content-center gap-3 mb-5">
+            <a href="{{ url_for('company_select') }}" class="btn btn-pro btn-cta shadow-lg">Connexion</a>
+            <a href="{{ url_for('company_signup') }}" class="btn btn-outline-dark btn-cta">Inscrire mon Entreprise</a>
+        </div>
+
+        <div class="mt-5 p-2">
+            <img src="{{ url_for('static', filename='images/hero_saas.png') }}" alt="Dashboard UI"
+                class="img-fluid hero-image mx-auto d-block">
+        </div>
+    </div>
+</div>
+
+<div class="container py-5" id="features">
+    <div class="row g-4 pt-5">
+        <div class="col-md-4">
+            <div class="feature-card">
+                <div class="icon-box">📊</div>
+                <h4 class="fw-bold mb-3">Supervision Live</h4>
+                <p class="text-muted">Suivez l'avancement des tâches de vos collaborateurs en temps réel. Soyez alerté
+                    des retards et visualisez les preuves photo de chaque mission terminée.</p>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="feature-card">
+                <div class="icon-box">📦</div>
+                <h4 class="fw-bold mb-3">Gestion de Stock</h4>
+                <p class="text-muted">Un inventaire automatisé avec calcul des sorties et alertes de stock critique. Ne
+                    soyez plus jamais en rupture sur vos produits phares.</p>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="feature-card">
+                <div class="icon-box">📅</div>
+                <h4 class="fw-bold mb-3">Planning Intelligent</h4>
+                <p class="text-muted">Définissez les horaires de début et de fin, gérez les absences (OFF) et envoyez
+                    les plannings personnalisés à chaque membre de votre équipe.</p>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="feature-card">
+                <div class="icon-box">🎙️</div>
+                <h4 class="fw-bold mb-3">Chat Vocal & Multimédia</h4>
+                <p class="text-muted">Une communication fluide : diffusez des messages vocaux instantanés vers toute
+                    l'équipe ou échangez des photos via un chat sécurisé.</p>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="feature-card">
+                <div class="icon-box">📜</div>
+                <h4 class="fw-bold mb-3">Rapports PDF</h4>
+                <p class="text-muted">Générez automatiquement des rapports hebdomadaires détaillés. Archivez les
+                    performances de chaque shift pour une analyse complète de votre activité.</p>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="feature-card">
+                <div class="icon-box">📱</div>
+                <h4 class="fw-bold mb-3">Optimisé Mobile</h4>
+                <p class="text-muted">Une interface conçue comme une application native. Accédez à vos outils partout,
+                    que vous soyez en cuisine, en salle ou en déplacement.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<footer class="py-5 bg-dark mt-5">
+    <div class="container text-center text-white">
+        <div class="h5 fw-bold mb-3 text-uppercase tracking-widest">Supervision Pro</div>
+        <p class="small opacity-50 mb-0">© 2026 Solution de Gestion Hôtelière Premium. Tous droits réservés.</p>
+    </div>
+</footer>
+
+<script>
+    // Smooth scroll for anchors
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener('click', function (e) {
+            e.preventDefault();
+            document.querySelector(this.getAttribute('href')).scrollIntoView({
+                behavior: 'smooth'
+            });
+        });
+    });
+</script>
+{% endblock %}

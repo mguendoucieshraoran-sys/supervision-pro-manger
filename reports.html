@@ -1,0 +1,131 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="row g-4 pt-3">
+    <div class="col-12 d-flex justify-content-between align-items-center mb-2">
+        <h2 class="h4 fw-bold mb-0 text-uppercase tracking-tight">📄 Archives des Rapports PDF</h2>
+        <a href="{{ url_for('manager_dashboard') }}" class="btn btn-outline-dark btn-sm fw-bold">RETOUR</a>
+    </div>
+
+    <div class="col-12">
+        {% if reports %}
+
+        <!-- Filtre par serveur -->
+        <div class="mb-4 d-flex gap-2 flex-wrap align-items-center">
+            <span class="small fw-bold text-muted">FILTRER :</span>
+            <button class="btn btn-sm btn-dark filter-btn active" data-server="all">TOUS</button>
+            {% set seen = [] %}
+            {% for report in reports %}
+            {% if report.server.name not in seen %}
+            {% if seen.append(report.server.name) %}{% endif %}
+            <button class="btn btn-sm btn-outline-dark filter-btn" data-server="{{ report.server.name }}">{{
+                report.server.name.upper() }}</button>
+            {% endif %}
+            {% endfor %}
+        </div>
+
+        <!-- Tableau classé -->
+        <div class="card shadow-sm border-light">
+            <div class="table-responsive">
+                <table class="table table-bordered align-middle mb-0" id="reports-table">
+                    <thead class="bg-dark text-white small">
+                        <tr>
+                            <th class="ps-4 py-3">📅 DATE</th>
+                            <th class="py-3">👤 COLLABORATEUR</th>
+                            <th class="py-3 text-center">⏰ HORAIRES</th>
+                            <th class="py-3 text-center">⏱ DURÉE</th>
+                            <th class="py-3 text-center">⏳ RETARD</th>
+                            <th class="py-3 text-center">💪 H.SUP</th>
+                            <th class="text-end pe-4 py-3">PDF</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for report in reports %}
+                        <tr class="report-row" data-server="{{ report.server.name }}">
+                            <td class="ps-4 fw-bold text-dark font-monospace">{{ report.shift.date_str }}</td>
+                            <td>
+                                <span
+                                    class="badge bg-primary-subtle text-primary border border-primary-subtle fw-bold">{{
+                                    report.server.name.upper() }}</span>
+                            </td>
+                            <td class="text-center">
+                                <span class="font-monospace small">
+                                    {{ report.shift.actual_start_time.strftime('%H:%M') if
+                                    report.shift.actual_start_time else '--:--' }}
+                                    →
+                                    {{ report.shift.actual_end_time.strftime('%H:%M') if report.shift.actual_end_time
+                                    else 'En cours' }}
+                                </span>
+                            </td>
+                            <td class="text-center">
+                                {% if report.shift.actual_start_time and report.shift.actual_end_time %}
+                                {% set duration = ((report.shift.actual_end_time -
+                                report.shift.actual_start_time).total_seconds() / 60) | int %}
+                                <span class="small fw-bold">{{ (duration // 60) }}h{{ '%02d' % (duration % 60) }}</span>
+                                {% else %}
+                                <span class="text-muted small">--</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-center">
+                                {% if report.shift.lateness_minutes > 0 %}
+                                <span class="badge bg-danger">{{ report.shift.lateness_minutes }} min</span>
+                                {% else %}
+                                <span class="badge bg-success-subtle text-success">0</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-center">
+                                {% if report.shift.overtime_minutes > 0 %}
+                                <span class="badge bg-info text-dark">{{ report.shift.overtime_minutes }} min</span>
+                                {% else %}
+                                <span class="badge bg-light text-muted border">0</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-end pe-4">
+                                <a href="{{ url_for('static', filename='reports/' + report.filename) }}"
+                                    class="btn btn-sm btn-dark px-3 fw-bold" target="_blank">
+                                    📥 OUVRIR
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="text-end mt-3">
+            <span class="small text-muted">{{ reports|length }} rapport(s) au total</span>
+        </div>
+
+        {% else %}
+        <div class="text-center py-5 bg-white border rounded shadow-sm">
+            <div class="mb-3 display-1 opacity-25">📂</div>
+            <h6 class="fw-bold text-muted">AUCUN RAPPORT GÉNÉRÉ POUR LE MOMENT</h6>
+            <p class="small text-muted mb-0">Les documents PDF sont créés automatiquement à chaque clôture de service.
+            </p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+    // Filtre par serveur
+    document.querySelectorAll('.filter-btn').forEach(btn => {
+        btn.addEventListener('click', function () {
+            document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active', 'btn-dark'));
+            document.querySelectorAll('.filter-btn').forEach(b => b.classList.add('btn-outline-dark'));
+            this.classList.add('active', 'btn-dark');
+            this.classList.remove('btn-outline-dark');
+
+            const server = this.dataset.server;
+            document.querySelectorAll('.report-row').forEach(row => {
+                if (server === 'all' || row.dataset.server === server) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+        });
+    });
+</script>
+{% endblock %}
